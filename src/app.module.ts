@@ -1,10 +1,17 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { MailModule } from './mail/mail.module'
-import { TestModule } from './test/test.module'
+import { MailModule } from '@/modules/mail/mail.module'
+import { TestModule } from '@/modules/test/test.module'
+import { AuthModule } from '@/modules/auth/auth.module'
+import { SettingsModule } from './modules/settings/settings.module'
+import { GroupModule } from './modules/group/group.module'
+import { ConfigModule } from '@nestjs/config'
+import { APP_GUARD } from '@nestjs/core'
+import { JwtGuard } from '@/modules/auth/jwt.guard'
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'mongodb',
       url: 'mongodb://localhost:27017/nanahouse',
@@ -12,9 +19,17 @@ import { TestModule } from './test/test.module'
       synchronize: true
     }),
     MailModule,
-    TestModule
+    TestModule,
+    AuthModule,
+    SettingsModule,
+    GroupModule
   ],
   controllers: [],
-  providers: []
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtGuard
+    }
+  ]
 })
 export class AppModule {}

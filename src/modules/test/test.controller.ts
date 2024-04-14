@@ -1,15 +1,34 @@
-import { Controller, Get, UseInterceptors } from '@nestjs/common'
+import { Controller, Get } from '@nestjs/common'
 import { TestService } from './test.service'
-import { IResponse } from '@/utils/define/response'
-import { TransformInterceptor } from '@transformers/response.transformer'
+import { IResponse } from '@define/response'
+import { Connection } from 'typeorm'
 
 @Controller('test')
-@UseInterceptors(TransformInterceptor)
 export class TestController {
-  constructor(private readonly testService: TestService) {}
+  constructor(
+    private readonly testService: TestService,
+    private connection: Connection
+  ) {}
 
   @Get()
   getHello(): IResponse<string> {
     return this.testService.getHello()
+  }
+
+  @Get('db')
+  checkDbConnection(): IResponse<string> {
+    if (this.connection.isConnected) {
+      return {
+        status: true,
+        message: 'Success',
+        data: 'Database connected'
+      }
+    } else {
+      return {
+        status: false,
+        message: 'Failed',
+        data: 'Database not connected'
+      }
+    }
   }
 }

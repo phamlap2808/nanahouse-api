@@ -5,4 +5,13 @@ interface IResponse<T> {
   data: T
 }
 
-export type { IResponse }
+interface IGetUser {
+  id: string
+  name: string
+  phone_number: string
+  email: string
+  address: string
+  token
+}
+
+export type { IResponse, IGetUser }

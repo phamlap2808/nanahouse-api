@@ -17,11 +17,13 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
+    "noUncheckedIndexedAccess": true,
     "paths": {
       "@/*": ["src/*"],
+      "@utils/*": ["src/utils/*"],
       "@define/*": ["src/utils/define/*"],
       "@transformers/*": ["src/utils/transformers/*"]
-    },
-    "exclude": ["node_modules"]
-  }
+    }
+  },
+  "exclude": []
 }

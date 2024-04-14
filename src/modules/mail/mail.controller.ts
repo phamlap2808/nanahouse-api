@@ -1,13 +1,25 @@
-import { Controller, Get } from '@nestjs/common'
+import { Body, Controller, Post } from '@nestjs/common'
 import { MailService } from './mail.service'
 
-@Controller()
+@Controller('email')
 export class MailController {
   constructor(private readonly mailerService: MailService) {}
 
-  @Get('send-mail')
-  async sendMail() {
-    await this.mailerService.sendMail('recipient@example.com', 'Hello', 'Hello from NestJS!')
-    return 'Mail sent'
+  @Post('send')
+  async sendMail(@Body() emailData: { to: string; subject: string; content: string }) {
+    const { to, subject, content } = emailData
+    const emailSent = await this.mailerService.sendMail(to, subject, content)
+
+    if (emailSent) {
+      return {
+        success: true,
+        message: 'Email sent successfully'
+      }
+    } else {
+      return {
+        success: false,
+        message: 'Error sending email'
+      }
+    }
   }
 }

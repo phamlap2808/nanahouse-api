@@ -1,4 +1,4 @@
-import { IResponse } from '@/utils/define/response'
+import { IResponse } from '@define/response'
 import { Injectable } from '@nestjs/common'
 
 @Injectable()

@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common'
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { MongoRepository } from 'typeorm'
 import { User } from './user.entity'
@@ -10,7 +10,6 @@ import * as bcrypt from 'bcrypt'
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name)
   constructor(
     @InjectRepository(User)
     private readonly userRepository: MongoRepository<User>,
@@ -19,7 +18,7 @@ export class AuthService {
   async validateUser(payload: JwtPayload): Promise<User | null> {
     const user: User = await this.userRepository.findOne({ where: { phone_number: payload.phone_number } })
     if (!user) {
-      throw new BadRequestException('Tài khoản và mật khẩu không chính xác')
+      throw new NotFoundException('Tài khoản và mật khẩu không chính xác')
     }
     return user
   }

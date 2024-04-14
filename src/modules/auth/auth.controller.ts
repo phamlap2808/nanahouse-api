@@ -8,7 +8,6 @@ import { Public } from '@/common/decorator/public.decorator'
 
 @Controller('auth')
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name)
   constructor(private authService: AuthService) {}
 
   @Public()
@@ -31,7 +30,6 @@ export class AuthController {
 
   @Get('profile')
   getProfile(@GetUser() user): IResponse<any> {
-    this.logger.log(`User details: ${JSON.stringify(user)}`)
     return {
       code: 200,
       status: true,

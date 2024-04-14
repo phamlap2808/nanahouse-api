@@ -8,6 +8,8 @@ import { GroupModule } from './modules/group/group.module'
 import { ConfigModule } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
 import { JwtGuard } from '@/modules/auth/jwt.guard'
+import { PermissionsGuard } from '@/modules/group/permissions.guard'
+import { GroupService } from '@/modules/group/group.service'
 
 @Module({
   imports: [
@@ -29,6 +31,10 @@ import { JwtGuard } from '@/modules/auth/jwt.guard'
     {
       provide: APP_GUARD,
       useClass: JwtGuard
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard
     }
   ]
 })

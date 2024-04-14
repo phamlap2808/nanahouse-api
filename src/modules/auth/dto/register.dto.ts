@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString, IsEmail, IsOptional } from 'class-validator'
-import { DTOVerification } from '@/common/dto/output-validation'
+import { DTOVerification } from '@/common/dto/index.dto'
 import { isUnique } from '@/common/validator/unique.validator'
 
 export class RegisterDto extends DTOVerification<RegisterDto>() {

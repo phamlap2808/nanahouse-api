@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString } from 'class-validator'
-import { DTOVerification } from '@/common/dto/output-validation'
+import { DTOVerification } from '@/common/dto/index.dto'
 
 export class ActiveUserDto extends DTOVerification<ActiveUserDto>() {
   @IsNotEmpty({ message: 'Mã xác thực không được bỏ trống' })

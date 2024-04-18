@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsOptional, IsString, ArrayMinSize } from 'class-validator'
+import { IsArray, IsNotEmpty, IsOptional, IsString, ArrayMinSize, IsBoolean } from 'class-validator'
 import { DTOVerification } from '@/common/dto/index.dto'
 import { isUnique } from '@/common/validator/unique.validator'
 
@@ -11,6 +11,10 @@ export class CreateGroupDto extends DTOVerification<CreateGroupDto>() {
   @IsOptional()
   @IsString({ message: 'Mô tả phải có kiểu dữ liệu là chuỗi' })
   description: string
+
+  @IsOptional()
+  @IsBoolean()
+  isAdmin: boolean
 
   @IsOptional()
   @IsArray()

@@ -31,6 +31,19 @@ export class GroupService {
     }
   }
 
+  async getGroups(): Promise<IResponse<Group[]>> {
+    const groups: Group[] = await this.groupRepository.find({
+      where: {
+        name: { $regex: 'admin', $options: 'i' }
+      }
+    })
+    return {
+      status: true,
+      message: 'Success',
+      data: groups
+    }
+  }
+
   async getGroupById(id: string): Promise<IResponse<Group>> {
     const group = await this.groupRepository.findOne({ where: { id } })
     if (!group) {

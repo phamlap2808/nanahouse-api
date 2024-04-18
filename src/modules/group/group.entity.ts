@@ -1,4 +1,4 @@
-import { Entity, ObjectIdColumn, Column } from 'typeorm'
+import { Entity, ObjectIdColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 import { v4 as uuidv4 } from 'uuid'
 
 @Entity({ synchronize: true })
@@ -12,15 +12,18 @@ export class Group {
   @Column()
   permissions: string[]
 
-  @Column()
-  isAdmin: boolean
+  @Column('boolean', { default: false })
+  isAdmin: boolean = false
 
   @Column()
   description: string
 
-  @Column()
-  createdBy: string = uuidv4()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date
 
-  @Column()
-  updatedBy: string = uuidv4()
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  updated_at: Date
+
+  @Column({ nullable: true })
+  delete_at: Date
 }

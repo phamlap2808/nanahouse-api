@@ -1,4 +1,4 @@
 export interface IPaginationOptions {
-  current_page: number
-  page_record: number
+  current_page?: string
+  page_record?: string
 }

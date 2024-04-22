@@ -1,16 +1,17 @@
-import { Entity, Column, ObjectIdColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm'
-import { v4 as uuidv4 } from 'uuid'
+import { Entity, Column, ObjectIdColumn, CreateDateColumn, UpdateDateColumn, ObjectId } from 'typeorm'
+import { Transform } from 'class-transformer'
 
 @Entity({ synchronize: true })
 export class User {
   @ObjectIdColumn()
-  id: string = uuidv4()
+  @Transform(({ value }) => value.toString(), { toPlainOnly: true })
+  id: ObjectId
 
   @Column()
   name: string
 
   @Column()
-  group_id: number
+  group_id: string
 
   @Column({ unique: true })
   phone_number: string
@@ -40,5 +41,5 @@ export class User {
   updated_at: Date
 
   @Column({ nullable: true })
-  delete_at: Date
+  deleted_at: Date
 }

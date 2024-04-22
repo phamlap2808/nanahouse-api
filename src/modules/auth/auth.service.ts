@@ -2,10 +2,11 @@ import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { MongoRepository } from 'typeorm'
 import { User } from './user.entity'
-import { RegisterDto, ActiveUserDto, LoginDto } from '@/modules/auth/dto/index.dto'
-import { IResponse, IGetUser } from '@define/response'
+import { ActiveUserDto, LoginDto, RegisterDto, ChangePasswordDto } from '@/modules/auth/dto/index.dto'
+import { IGetUser, IResponse } from '@define/response'
 import { JwtService } from '@nestjs/jwt'
 import { JwtPayload } from './jwt-payload.interface'
+import { ObjectId } from 'mongodb'
 import * as bcrypt from 'bcrypt'
 
 @Injectable()
@@ -55,6 +56,13 @@ export class AuthService {
         message: 'Token không hợp lệ',
         data: null
       }
+    } else if (user.deleted_at) {
+      return {
+        code: HttpStatus.FORBIDDEN,
+        status: false,
+        message: 'Tài khoản đã bị xóa',
+        data: null
+      }
     } else {
       user.auth_status = true
       user.token = null
@@ -73,6 +81,22 @@ export class AuthService {
     if (!user) {
       return {
         code: HttpStatus.NOT_FOUND,
+        status: false,
+        message: 'Tài khoản và mật khẩu không chính xác',
+        data: null
+      }
+    }
+    if (!user.auth_status) {
+      return {
+        code: HttpStatus.FORBIDDEN,
+        status: false,
+        message: 'Tài khoản và mật khẩu không chính xác',
+        data: null
+      }
+    }
+    if (user.deleted_at) {
+      return {
+        code: HttpStatus.FORBIDDEN,
         status: false,
         message: 'Tài khoản và mật khẩu không chính xác',
         data: null
@@ -97,11 +121,52 @@ export class AuthService {
       data: {
         address: user.address,
         email: user.email,
-        id: user.id,
+        id: user.id.toString(),
         name: user.name,
         phone_number: user.phone_number,
         token
       }
+    }
+  }
+  async changePassword(changePassword: ChangePasswordDto, user: User): Promise<IResponse<string>> {
+    const { old_password, new_password } = changePassword
+    const isMatch = await bcrypt.compare(old_password, user.password)
+    if (!isMatch) {
+      return {
+        code: HttpStatus.UNPROCESSABLE_ENTITY,
+        status: false,
+        message: 'Mật khẩu cũ không chính xác',
+        data: null
+      }
+    }
+    const salt = await bcrypt.genSalt()
+    user.password = await bcrypt.hash(new_password, salt)
+    await this.userRepository.save(user)
+    return {
+      code: HttpStatus.OK,
+      status: true,
+      message: 'Success',
+      data: 'Đổi mật khẩu thành công'
+    }
+  }
+  async deleteUser(id: string): Promise<IResponse<string>> {
+    const _id = new ObjectId(id)
+    const user = await this.userRepository.findOne({ where: { _id } })
+    if (!user) {
+      return {
+        code: HttpStatus.NOT_FOUND,
+        status: false,
+        message: 'Không tìm thấy người dùng cần xóa',
+        data: null
+      }
+    }
+    user.deleted_at = new Date()
+    await this.userRepository.save(user)
+    return {
+      code: HttpStatus.OK,
+      status: true,
+      message: 'Success',
+      data: 'Xóa người dùng thành công'
     }
   }
 }

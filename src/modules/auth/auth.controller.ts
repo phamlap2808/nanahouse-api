@@ -1,6 +1,6 @@
-import { Controller, Post, Body, Logger, UseGuards, Get, Request } from '@nestjs/common'
+import { Controller, Post, Body, Get, Put } from '@nestjs/common'
 import { AuthService } from './auth.service'
-import { RegisterDto, ActiveUserDto, LoginDto } from './dto/index.dto'
+import { RegisterDto, ActiveUserDto, LoginDto, ChangePasswordDto } from './dto/index.dto'
 import { User } from './user.entity'
 import { IResponse, IGetUser } from '@define/response'
 import { GetUser } from '@/common/decorator/get-user.decorator'
@@ -29,12 +29,20 @@ export class AuthController {
   }
 
   @Get('profile')
-  getProfile(@GetUser() user): IResponse<any> {
+  getProfile(@GetUser() user: User): IResponse<any> {
     return {
       code: 200,
       status: true,
       message: 'Success',
       data: user
     }
+  }
+
+  @Put('change-password')
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @GetUser() user: User
+  ): Promise<IResponse<string>> {
+    return await this.authService.changePassword(changePasswordDto, user)
   }
 }

@@ -20,9 +20,9 @@ export class PermissionsGuard implements CanActivate {
     }
     const { user } = context.switchToHttp().getRequest()
     const group = await this.groupService.getGroupById(user.group_id)
-    if (group.data.isAdmin) {
+    if (group.isAdmin) {
       return true
     }
-    return requiredPermissions.some((permission) => group.data.permissions?.includes(permission))
+    return requiredPermissions.some((permission) => group.permissions?.includes(permission))
   }
 }

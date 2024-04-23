@@ -2,7 +2,7 @@ import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { MongoRepository } from 'typeorm'
 import { User } from './user.entity'
-import { ActiveUserDto, LoginDto, RegisterDto, ChangePasswordDto } from '@/modules/auth/dto/index.dto'
+import { ActiveUserDto, LoginDto, RegisterDto, ChangePasswordDto, EditUserDto } from '@/modules/auth/dto/index.dto'
 import { IGetUser, IResponse } from '@define/response'
 import { JwtService } from '@nestjs/jwt'
 import { JwtPayload } from './jwt-payload.interface'
@@ -167,6 +167,39 @@ export class AuthService {
       status: true,
       message: 'Success',
       data: 'Xóa người dùng thành công'
+    }
+  }
+  async editUser(id: string, editUser: EditUserDto): Promise<IResponse<string>> {
+    const _id = new ObjectId(id)
+    const user = await this.userRepository.findOne({ where: { _id } })
+    if (!user) {
+      return {
+        code: HttpStatus.NOT_FOUND,
+        status: false,
+        message: 'Không tìm thấy người dùng',
+        data: null
+      }
+    }
+    if (user.deleted_at) {
+      return {
+        code: HttpStatus.FORBIDDEN,
+        status: false,
+        message: 'Người dùng đã bị xóa',
+        data: null
+      }
+    }
+    const { address, email, name, group_id } = editUser
+    user.address = address || user.address
+    user.email = email || user.email
+    user.name = name || user.name
+    user.group_id = group_id || user.group_id
+    user.updated_at = new Date()
+    await this.userRepository.save(user)
+    return {
+      code: HttpStatus.OK,
+      status: true,
+      message: 'Success',
+      data: 'Cập nhật thành công'
     }
   }
 }

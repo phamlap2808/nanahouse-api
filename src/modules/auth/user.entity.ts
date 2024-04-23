@@ -10,8 +10,8 @@ export class User {
   @Column()
   name: string
 
-  @Column()
-  group_id: string
+  @Column('string', { nullable: true })
+  group_id: string = null
 
   @Column({ unique: true })
   phone_number: string

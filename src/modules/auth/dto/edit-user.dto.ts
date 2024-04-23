@@ -1,8 +1,8 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator'
+import { IsEmail, IsOptional, IsString } from 'class-validator'
 import { DTOVerification } from '@/common/dto/output-validation'
 
 export class EditUserDto extends DTOVerification<EditUserDto>() {
-  @IsNotEmpty({ message: 'Tên không được bỏ trống' })
+  @IsOptional()
   @IsString({ message: 'Tên phải có kiểu dữ liệu là chuỗi' })
   name: string
 

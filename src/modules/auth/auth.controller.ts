@@ -1,6 +1,6 @@
-import { Controller, Post, Body, Get, Put } from '@nestjs/common'
+import { Controller, Post, Body, Get, Put, Delete, Param } from '@nestjs/common'
 import { AuthService } from './auth.service'
-import { RegisterDto, ActiveUserDto, LoginDto, ChangePasswordDto } from './dto/index.dto'
+import { RegisterDto, ActiveUserDto, LoginDto, ChangePasswordDto, EditUserDto } from './dto/index.dto'
 import { User } from './user.entity'
 import { IResponse, IGetUser } from '@define/response'
 import { GetUser } from '@/common/decorator/get-user.decorator'
@@ -44,5 +44,15 @@ export class AuthController {
     @GetUser() user: User
   ): Promise<IResponse<string>> {
     return await this.authService.changePassword(changePasswordDto, user)
+  }
+
+  @Delete('/:id')
+  deleteAccount(@Param('id') id: string): Promise<IResponse<string>> {
+    return this.authService.deleteUser(id)
+  }
+
+  @Put('/:id')
+  updateUser(@Param('id') id: string, @Body() editUserDto: EditUserDto): Promise<IResponse<string>> {
+    return this.authService.editUser(id, editUserDto)
   }
 }

@@ -5,17 +5,19 @@ import { TestModule } from '@/modules/test/test.module'
 import { AuthModule } from '@/modules/auth/auth.module'
 import { SettingsModule } from './modules/settings/settings.module'
 import { GroupModule } from './modules/group/group.module'
+// import { GroupService } from '@/modules/group/group.service'
 import { ConfigModule } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
 import { JwtGuard } from '@/modules/auth/jwt.guard'
 import { CheckPermissions } from '@/modules/group/permissions.guard'
+import { Group } from '@/modules/group/group.entity'
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'mongodb',
-      url: 'mongodb://localhost:27017/nanahouse',
+      url: process.env.DATABASE_URL,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true
     }),
@@ -23,7 +25,8 @@ import { CheckPermissions } from '@/modules/group/permissions.guard'
     TestModule,
     AuthModule,
     SettingsModule,
-    GroupModule
+    GroupModule,
+    TypeOrmModule.forFeature([Group])
   ],
   controllers: [],
   providers: [
@@ -35,6 +38,14 @@ import { CheckPermissions } from '@/modules/group/permissions.guard'
       provide: APP_GUARD,
       useClass: CheckPermissions
     }
+    // GroupService,
+    // {
+    //   provide: 'APP_INITIALIZER',
+    //   useFactory: (groupService: GroupService) => async () => {
+    //     await groupService.createInitialGroups()
+    //   },
+    //   inject: [GroupService]
+    // }
   ]
 })
 export class AppModule {}

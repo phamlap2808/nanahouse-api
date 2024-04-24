@@ -149,4 +149,17 @@ export class GroupService {
       }
     }
   }
+
+  async createInitialGroups() {
+    const adminGroup = await this.groupRepository.findOne({ where: { name: 'Admin' } })
+    const memberGroup = await this.groupRepository.findOne({ where: { name: 'Member' } })
+
+    if (!adminGroup) {
+      await this.groupRepository.save({ name: 'Admin', isAdmin: true, permissions: [], description: '' })
+    }
+
+    if (!memberGroup) {
+      await this.groupRepository.save({ name: 'Member', isAdmin: false, permissions: [], description: '' })
+    }
+  }
 }

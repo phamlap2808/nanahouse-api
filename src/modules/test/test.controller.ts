@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common'
 import { TestService } from './test.service'
 import { IResponse } from '@define/response'
 import { Connection } from 'typeorm'
+import { Public } from '@/common/decorator/public.decorator'
 
 @Controller('test')
 export class TestController {
@@ -11,11 +12,13 @@ export class TestController {
   ) {}
 
   @Get()
+  @Public()
   getHello(): IResponse<string> {
     return this.testService.getHello()
   }
 
   @Get('db')
+  @Public()
   checkDbConnection(): IResponse<string> {
     if (this.connection.isConnected) {
       return {

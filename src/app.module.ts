@@ -11,6 +11,8 @@ import { APP_GUARD } from '@nestjs/core'
 import { JwtGuard } from '@/modules/auth/jwt.guard'
 import { CheckPermissions } from '@/modules/group/permissions.guard'
 import { Group } from '@/modules/group/group.entity'
+import { CategoryModule } from '@/modules/category/category.module'
+import { ProductModule } from './modules/product/product.module'
 
 @Module({
   imports: [
@@ -26,7 +28,9 @@ import { Group } from '@/modules/group/group.entity'
     AuthModule,
     SettingsModule,
     GroupModule,
-    TypeOrmModule.forFeature([Group])
+    TypeOrmModule.forFeature([Group]),
+    CategoryModule,
+    ProductModule
   ],
   controllers: [],
   providers: [

@@ -1,28 +1,25 @@
 import { HttpStatus, Injectable } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
-import { MongoRepository } from 'typeorm'
 import { ObjectId } from 'mongodb'
-import { Group } from './group.entity'
+import { Group } from './group.schema'
+import { InjectModel } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
 import { IResponse, IResponsePagination } from '@define/response'
 import { CreateGroupDto, UpdateGroupDto } from './dto/index.dto'
 import { TFilterGroup } from '@/modules/group/define'
 
 @Injectable()
 export class GroupService {
-  constructor(
-    @InjectRepository(Group)
-    private readonly groupRepository: MongoRepository<Group>
-  ) {}
+  constructor(@InjectModel('groups') private readonly groupModel: Model<Group>) {}
 
   async createGroup(group: CreateGroupDto): Promise<IResponse<Group>> {
     const { name, description, permissions } = group
-    const newGroup = this.groupRepository.create({ name, description, permissions })
+    const newGroup = new this.groupModel({ name, description, isAdmin: false, permissions })
     try {
-      await this.groupRepository.save(newGroup)
+      await newGroup.save()
       return {
         status: true,
         message: 'Success',
-        data: newGroup
+        data: newGroup.toObject()
       }
     } catch (error) {
       return {
@@ -38,14 +35,14 @@ export class GroupService {
     const pageRecord = query.page_record || '10'
     const skip = (parseInt(currentPage) - 1) * parseInt(pageRecord)
     const search = query.name ? { name: { $regex: query.name, $options: 'i' } } : {}
-    const groups: Group[] = await this.groupRepository.find({
-      where: {
+    const groups: Group[] = await this.groupModel
+      .find({
         ...search,
         deleted_at: null
-      },
-      skip,
-      take: parseInt(pageRecord)
-    })
+      })
+      .skip(skip)
+      .limit(parseInt(pageRecord))
+      .exec()
     return {
       status: true,
       message: 'Success',
@@ -61,7 +58,7 @@ export class GroupService {
 
   async getGroupById(id: string): Promise<Group> {
     const _id = new ObjectId(id)
-    const group = await this.groupRepository.findOne({ where: { _id } })
+    const group = await this.groupModel.findOne({ _id })
     if (!group) {
       return null
     }
@@ -91,7 +88,7 @@ export class GroupService {
   async updateGroup(id: string, group: UpdateGroupDto): Promise<IResponse<Group>> {
     const { name, description, isAdmin, permissions } = group
     const _id = new ObjectId(id)
-    const currentGroup = await this.groupRepository.findOne({ where: { _id: _id } })
+    const currentGroup = await this.groupModel.findOne({ _id: _id })
     if (!currentGroup) {
       return {
         status: false,
@@ -106,7 +103,7 @@ export class GroupService {
     currentGroup.permissions = permissions || currentGroup.permissions
     currentGroup.updated_at = new Date()
     try {
-      await this.groupRepository.save(currentGroup)
+      await currentGroup.save()
       return {
         status: true,
         message: 'Success',
@@ -133,8 +130,9 @@ export class GroupService {
       }
     }
     group.deleted_at = new Date()
+    const deleteGroup = new this.groupModel(group)
     try {
-      await this.groupRepository.save(group)
+      await deleteGroup.save()
       return {
         status: true,
         message: 'Success',
@@ -150,16 +148,16 @@ export class GroupService {
     }
   }
 
-  async createInitialGroups() {
-    const adminGroup = await this.groupRepository.findOne({ where: { name: 'Admin' } })
-    const memberGroup = await this.groupRepository.findOne({ where: { name: 'Member' } })
-
-    if (!adminGroup) {
-      await this.groupRepository.save({ name: 'Admin', isAdmin: true, permissions: [], description: '' })
-    }
-
-    if (!memberGroup) {
-      await this.groupRepository.save({ name: 'Member', isAdmin: false, permissions: [], description: '' })
-    }
-  }
+  // async createInitialGroups() {
+  //   const adminGroup = await this.groupRepository.findOne({ where: { name: 'Admin' } })
+  //   const memberGroup = await this.groupRepository.findOne({ where: { name: 'Member' } })
+  //
+  //   if (!adminGroup) {
+  //     await this.groupRepository.save({ name: 'Admin', isAdmin: true, permissions: [], description: '' })
+  //   }
+  //
+  //   if (!memberGroup) {
+  //     await this.groupRepository.save({ name: 'Member', isAdmin: false, permissions: [], description: '' })
+  //   }
+  // }
 }

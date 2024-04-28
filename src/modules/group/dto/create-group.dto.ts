@@ -5,7 +5,7 @@ import { isUnique } from '@/common/validator/unique.validator'
 export class CreateGroupDto extends DTOVerification<CreateGroupDto>() {
   @IsNotEmpty({ message: 'Tên nhóm không được bỏ trống' })
   @IsString({ message: 'Tên nhóm phải có kiểu dữ liệu là chuỗi' })
-  @isUnique({ tableName: 'group', column: 'name' })
+  @isUnique('groups', 'name', { message: 'Tên nhóm đã tồn tại' })
   name: string
 
   @IsOptional()

@@ -2,10 +2,11 @@ import { Controller, Get, Post, Body, Query, Put, Param, Delete } from '@nestjs/
 import { GroupService } from './group.service'
 import { CreateGroupDto, UpdateGroupDto } from './dto/index.dto'
 import { IResponse, IResponsePagination } from '@define/response'
-import { Group } from '@/modules/group/group.entity'
+import { Group } from '@/modules/group/group.schema'
 import { TFilterGroup } from '@/modules/group/define'
 import { CheckPermissionsDecorator } from './permissions.guard'
 import PERMISSION_KEYS from '@/config/permission-key'
+import { Public } from '@/common/decorator/public.decorator'
 
 @Controller('group')
 export class GroupController {
@@ -23,7 +24,7 @@ export class GroupController {
   }
 
   @Post()
-  @CheckPermissionsDecorator(PERMISSION_KEYS.settings_group_add)
+  @Public()
   createGroup(@Body() createGroupDto: CreateGroupDto): Promise<IResponse<Group>> {
     return this.groupService.createGroup(createGroupDto)
   }

@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { User } from '@/modules/auth/user.entity'
-import { Group } from '@/modules/group/group.entity'
+import { Group } from '@/modules/group/group.schema'
 import { GroupService } from '@/modules/group/group.service'
 
 @Injectable()

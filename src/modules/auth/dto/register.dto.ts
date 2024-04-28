@@ -9,7 +9,7 @@ export class RegisterDto extends DTOVerification<RegisterDto>() {
 
   @IsNotEmpty({ message: 'Số điện thoại không được bỏ trống' })
   @IsString({ message: 'Số điện thoại phải có kiểu dữ liệu là chuỗi' })
-  @isUnique({ tableName: 'user', column: 'phone_number' })
+  @isUnique('users', 'phone_number', { message: 'Số điện thoại đã tồn tại' })
   phone_number: string
 
   @IsOptional()

@@ -13,8 +13,4 @@ export class EditUserDto extends DTOVerification<EditUserDto>() {
   @IsOptional()
   @IsString({ message: 'Địa chỉ phải có kiểu dữ liệu là chuỗi' })
   address: string
-
-  @IsOptional()
-  @IsString({ message: 'Nhóm phải có kiểu dữ liệu là chuỗi' })
-  group_id: string
 }

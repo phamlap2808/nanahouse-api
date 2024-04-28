@@ -1,3 +1,6 @@
+import { Group } from '@/modules/group/group.schema'
+import { ObjectId } from 'mongodb'
+
 interface IBaseResponse {
   status: boolean
   code?: number
@@ -19,12 +22,13 @@ interface IResponsePagination<T> extends IBaseResponse {
 }
 
 interface IGetUser {
-  id: string
+  _id: ObjectId
   name: string
   phone_number: string
   email: string
   address: string
   token: string
+  group: Group
 }
 
 export type { IResponse, IGetUser, IResponsePagination }

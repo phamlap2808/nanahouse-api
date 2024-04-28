@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common'
-import { TypeOrmModule } from '@nestjs/typeorm'
 import { AuthService } from '@/modules/auth/auth.service'
 import { AuthController } from '@/modules/auth/auth.controller'
-import { User } from '@/modules/auth/user.entity'
 import { IsUniqueConstraint } from '@/common/validator/unique.validator'
+import { MongooseModule } from '@nestjs/mongoose'
 import { PassportModule } from '@nestjs/passport'
 import { JwtModule } from '@nestjs/jwt'
 import { JwtStrategy } from './jwt.strategy'
 import { ConfigModule, ConfigService } from '@nestjs/config'
+import { UserSchema } from './user.schema'
 
 @Module({
   imports: [
@@ -22,7 +22,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
       }),
       inject: [ConfigService]
     }),
-    TypeOrmModule.forFeature([User])
+    MongooseModule.forFeature([{ name: 'users', schema: UserSchema }])
   ],
   providers: [AuthService, IsUniqueConstraint, JwtStrategy],
   controllers: [AuthController],

@@ -1,23 +1,22 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
-import { MongoRepository } from 'typeorm'
-import { User } from './user.entity'
-import { ActiveUserDto, LoginDto, RegisterDto, ChangePasswordDto, EditUserDto } from '@/modules/auth/dto/index.dto'
+import { ActiveUserDto, ChangePasswordDto, EditUserDto, LoginDto, RegisterDto } from '@/modules/auth/dto/index.dto'
 import { IGetUser, IResponse } from '@define/response'
 import { JwtService } from '@nestjs/jwt'
 import { JwtPayload } from './jwt-payload.interface'
 import { ObjectId } from 'mongodb'
 import * as bcrypt from 'bcrypt'
+import { InjectModel } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
+import { User } from './user.schema'
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: MongoRepository<User>,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    @InjectModel('users') private readonly userModel: Model<User>
   ) {}
   async validateUser(payload: JwtPayload): Promise<User | null> {
-    const user: User = await this.userRepository.findOne({ where: { phone_number: payload.phone_number } })
+    const user: User = await this.userModel.findOne({ phone_number: payload.phone_number })
     if (!user) {
       throw new NotFoundException('Tài khoản và mật khẩu không chính xác')
     }
@@ -28,14 +27,14 @@ export class AuthService {
     const salt = await bcrypt.genSalt()
     const hashedPassword = await bcrypt.hash(password, salt)
     const token = this.jwtService.sign({ phone_number } as JwtPayload)
-    const user = this.userRepository.create({ phone_number, address, email, name, password: hashedPassword, token })
+    const user = new this.userModel({ phone_number, address, email, name, password: hashedPassword, token })
     try {
-      await this.userRepository.save(user)
+      await user.save()
       return {
         code: HttpStatus.CREATED,
         status: true,
         message: 'Success',
-        data: user
+        data: user.toObject()
       }
     } catch (error) {
       return {
@@ -48,7 +47,7 @@ export class AuthService {
   }
   async activeUser(activeUser: ActiveUserDto): Promise<IResponse<string>> {
     const { token } = activeUser
-    const user = await this.userRepository.findOne({ where: { token } })
+    const user = await this.userModel.findOne({ token })
     if (!user) {
       return {
         code: HttpStatus.FORBIDDEN,
@@ -66,7 +65,7 @@ export class AuthService {
     } else {
       user.auth_status = true
       user.token = null
-      await this.userRepository.save(user)
+      await user.save()
       return {
         code: HttpStatus.OK,
         status: true,
@@ -77,7 +76,8 @@ export class AuthService {
   }
   async login(loginDto: LoginDto): Promise<IResponse<IGetUser>> {
     const { phone_number, password } = loginDto
-    const user = await this.userRepository.findOne({ where: { phone_number } })
+    const user = await this.userModel.findOne({ phone_number }).populate('group', 'name isAdmin permissions').exec()
+    console.log(user)
     if (!user) {
       return {
         code: HttpStatus.NOT_FOUND,
@@ -111,21 +111,13 @@ export class AuthService {
         data: null
       }
     }
-    const token = this.jwtService.sign({ phone_number } as JwtPayload)
-    user.token = token
-    await this.userRepository.save(user)
+    user.token = this.jwtService.sign({ phone_number } as JwtPayload)
+    await user.save()
     return {
       code: HttpStatus.OK,
       status: true,
       message: 'Success',
-      data: {
-        address: user.address,
-        email: user.email,
-        id: user.id.toString(),
-        name: user.name,
-        phone_number: user.phone_number,
-        token
-      }
+      data: user
     }
   }
   async changePassword(changePassword: ChangePasswordDto, user: User): Promise<IResponse<string>> {
@@ -141,7 +133,8 @@ export class AuthService {
     }
     const salt = await bcrypt.genSalt()
     user.password = await bcrypt.hash(new_password, salt)
-    await this.userRepository.save(user)
+    const newUser = new this.userModel(user)
+    await newUser.save()
     return {
       code: HttpStatus.OK,
       status: true,
@@ -151,7 +144,7 @@ export class AuthService {
   }
   async deleteUser(id: string): Promise<IResponse<string>> {
     const _id = new ObjectId(id)
-    const user = await this.userRepository.findOne({ where: { _id } })
+    const user = await this.userModel.findOne({ _id })
     if (!user) {
       return {
         code: HttpStatus.NOT_FOUND,
@@ -161,7 +154,7 @@ export class AuthService {
       }
     }
     user.deleted_at = new Date()
-    await this.userRepository.save(user)
+    await user.save()
     return {
       code: HttpStatus.OK,
       status: true,
@@ -171,7 +164,7 @@ export class AuthService {
   }
   async editUser(id: string, editUser: EditUserDto): Promise<IResponse<string>> {
     const _id = new ObjectId(id)
-    const user = await this.userRepository.findOne({ where: { _id } })
+    const user = await this.userModel.findOne({ _id })
     if (!user) {
       return {
         code: HttpStatus.NOT_FOUND,
@@ -188,13 +181,12 @@ export class AuthService {
         data: null
       }
     }
-    const { address, email, name, group_id } = editUser
+    const { address, email, name } = editUser
     user.address = address || user.address
     user.email = email || user.email
     user.name = name || user.name
-    user.group_id = group_id || user.group_id
     user.updated_at = new Date()
-    await this.userRepository.save(user)
+    await user.save()
     return {
       code: HttpStatus.OK,
       status: true,

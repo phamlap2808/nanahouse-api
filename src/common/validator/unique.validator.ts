@@ -1,48 +1,38 @@
 import { Injectable } from '@nestjs/common'
+import { InjectConnection } from '@nestjs/mongoose'
 import {
+  registerDecorator,
   ValidationArguments,
-  ValidationOptions,
   ValidatorConstraint,
-  ValidatorConstraintInterface,
-  registerDecorator
+  ValidatorConstraintInterface
 } from 'class-validator'
-import { EntityManager } from 'typeorm'
+import { Connection, Model } from 'mongoose'
 
-// decorator options interface
-export type IsUniqeInterface = {
-  tableName: string
-  column: string
-}
-
-@ValidatorConstraint({ name: 'IsUniqueConstraint', async: true })
 @Injectable()
+@ValidatorConstraint({ async: true })
 export class IsUniqueConstraint implements ValidatorConstraintInterface {
-  constructor(private readonly entityManager: EntityManager) {}
-  async validate(value: any, args?: ValidationArguments): Promise<boolean> {
-    // catch options from decorator
-    const { tableName, column }: IsUniqeInterface = args.constraints[0]
+  constructor(@InjectConnection() private connection: Connection) {}
 
-    // database query check data is exists
-    const dataExist = await this.entityManager.getMongoRepository(tableName).findOne({ [column]: value })
-    return !dataExist
+  async validate(value: any, args: ValidationArguments) {
+    const [model, field] = args.constraints
+    const repository: Model<any> = this.connection.model(model)
+
+    const result = await repository.findOne({ [field]: value })
+    return !result
   }
 
-  defaultMessage(validationArguments?: ValidationArguments): string {
-    // return custom field message
-    const field: string = validationArguments.property
-    return `${field} Đã tồn tại trong hệ thống`
+  defaultMessage(args: ValidationArguments) {
+    return `${args.property} already exists`
   }
 }
 
-// decorator function
-export function isUnique(options: IsUniqeInterface, validationOptions?: ValidationOptions) {
+export function isUnique(modelName: string, propertyName: string, additionalQuery?: object) {
   return function (object: any, propertyName: string) {
     registerDecorator({
       name: 'isUnique',
       target: object.constructor,
       propertyName: propertyName,
-      options: validationOptions,
-      constraints: [options],
+      constraints: [modelName, propertyName, additionalQuery],
       validator: IsUniqueConstraint
     })
   }

@@ -22,10 +22,10 @@ export class Category {
   @Column()
   description: string
 
-  @Column('number', { nullable: true })
+  @Column('number', { nullable: true, default: null })
   sort: number
 
-  @ManyToOne(() => Category, (category) => category.children)
+  @ManyToOne(() => Category, (category) => category.children, { nullable: true })
   parent: Category
 
   @OneToMany(() => Category, (category) => category.parent)
@@ -37,6 +37,6 @@ export class Category {
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updated_at: Date
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: null })
   deleted_at: Date
 }

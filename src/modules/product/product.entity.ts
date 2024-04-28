@@ -1,15 +1,12 @@
-import { Column, CreateDateColumn, Entity, ObjectId, ObjectIdColumn, UpdateDateColumn } from 'typeorm'
+import { Column, CreateDateColumn, Entity, ManyToOne, ObjectId, ObjectIdColumn, UpdateDateColumn } from 'typeorm'
 import { Transform } from 'class-transformer'
+import { Category } from '@/modules/category/category.entity'
 
 @Entity({ synchronize: true })
 export class Product {
   @ObjectIdColumn()
-  @Transform(({ value }) => value.toString(), { toPlainOnly: true })
+  @Transform(({ value }) => (value ? value.toString() : value), { toPlainOnly: true })
   id: ObjectId
-
-  @ObjectIdColumn()
-  @Transform(({ value }) => value.toString(), { toPlainOnly: true })
-  category_id: ObjectId
 
   @Column()
   title: string
@@ -47,12 +44,18 @@ export class Product {
   @Column()
   images: string[]
 
+  @ManyToOne(() => Category)
+  category: Category
+
+  @ManyToOne(() => Product)
+  variant: Product
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date
 
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   updated_at: Date
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamp', nullable: true, default: null })
   deleted_at: Date
 }

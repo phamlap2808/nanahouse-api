@@ -1,17 +1,15 @@
 import { Injectable } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
-import { MongoRepository } from 'typeorm'
-import { Category } from './category.entity'
+import { Category } from './category.schema'
 import { CreateCategoryDto } from './dto/index.dto'
-import { IResponse } from '@define/response'
+import { IResponse, IResponsePagination } from '@define/response'
 import { ObjectId } from 'mongodb'
+import { InjectModel } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
+import { TFilterCategories } from './define'
 
 @Injectable()
 export class CategoryService {
-  constructor(
-    @InjectRepository(Category)
-    private categoryRepository: MongoRepository<Category>
-  ) {}
+  constructor(@InjectModel('categories') private readonly categoryModel: Model<Category>) {}
 
   async createCategory(categoryDto: CreateCategoryDto): Promise<IResponse<Category>> {
     const { name, description, parent_id } = categoryDto
@@ -28,13 +26,13 @@ export class CategoryService {
       }
     }
 
-    const newCategory = this.categoryRepository.create({ name, description, parent })
+    const newCategory = new this.categoryModel({ name, description, parent })
     try {
-      await this.categoryRepository.save(newCategory)
+      await newCategory.save()
       return {
         status: true,
         message: 'Success',
-        data: newCategory
+        data: newCategory.toObject()
       }
     } catch (error) {
       return {
@@ -46,7 +44,7 @@ export class CategoryService {
   }
   async getCategoryById(id: string): Promise<Category> {
     const _id = new ObjectId(id)
-    const category = await this.categoryRepository.findOne({ where: { _id } })
+    const category = await this.categoryModel.findOne({ _id }).lean()
     if (!category) {
       return null
     }
@@ -55,10 +53,10 @@ export class CategoryService {
     }
     return category
   }
-  async getCategories(): Promise<IResponse<Category[]>> {
-    const categories = await this.categoryRepository.find({ where: { deleted_at: null, parent: null } })
+  async getCategoriesMenu(): Promise<IResponse<Category[]>> {
+    const categories = await this.categoryModel.find({ deleted_at: null, parent: null }).lean()
     for (const category of categories) {
-      await this.loadChildren(category)
+      category.children = await this.loadChildren(category)
     }
     return {
       status: true,
@@ -66,12 +64,41 @@ export class CategoryService {
       data: categories
     }
   }
-  async loadChildren(category: Category): Promise<void> {
-    category.children = await this.categoryRepository.find({ where: { parent: category } })
-    for (const child of category.children) {
-      await this.loadChildren(child)
+  async getCategories(query: TFilterCategories): Promise<IResponsePagination<Category>> {
+    const currentPage = query.current_page || '1'
+    const pageRecord = query.page_record || '10'
+    const skip = (parseInt(currentPage) - 1) * parseInt(pageRecord)
+    const search = query.name ? { name: { $regex: query.name, $options: 'i' } } : {}
+    const categories: Category[] = await this.categoryModel
+      .find({
+        ...search,
+        deleted_at: null
+      })
+      .skip(skip)
+      .limit(parseInt(pageRecord))
+      .lean()
+      .exec()
+    return {
+      status: true,
+      message: 'Success',
+      data: {
+        data: categories,
+        total_page: Math.ceil(categories.length / parseInt(pageRecord)),
+        total_page_record: parseInt(pageRecord),
+        total_record: categories.length,
+        current_page: parseInt(currentPage)
+      }
     }
   }
+
+  async loadChildren(parent: Category): Promise<Category[]> {
+    const categories = await this.categoryModel.find({ parent, deleted_at: null }).lean()
+    for (let i = 0; i < categories.length; i++) {
+      categories[i].children = await this.loadChildren(categories[i])
+    }
+    return categories
+  }
+
   async getCategory(id: string): Promise<IResponse<Category>> {
     const category = await this.getCategoryById(id)
     if (!category) {
@@ -113,11 +140,11 @@ export class CategoryService {
     currentCategory.parent = parent || currentCategory.parent
     currentCategory.updated_at = new Date()
     try {
-      await this.categoryRepository.save(currentCategory)
+      const res = await this.categoryModel.findByIdAndUpdate(id, currentCategory)
       return {
         status: true,
         message: 'Success',
-        data: currentCategory
+        data: res.toObject()
       }
     } catch (error) {
       return {
@@ -138,7 +165,7 @@ export class CategoryService {
     }
     currentCategory.deleted_at = new Date()
     try {
-      await this.categoryRepository.save(currentCategory)
+      await this.categoryModel.findByIdAndUpdate(id, currentCategory)
       return {
         status: true,
         message: 'Success',

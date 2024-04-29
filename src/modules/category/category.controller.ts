@@ -1,19 +1,26 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
 import { CategoryService } from './category.service'
-import { Category } from './category.entity'
+import { Category } from './category.schema'
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/index.dto'
-import { IResponse } from '@define/response'
+import { IResponse, IResponsePagination } from '@define/response'
 import { CheckPermissionsDecorator } from '../group/permissions.guard'
 import PERMISSION_KEYS from '@/config/permission-key'
+import { TFilterCategories } from './define'
 
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
+  @Get('/menu')
+  @CheckPermissionsDecorator(PERMISSION_KEYS.category_menu)
+  getCategoriesMenu(): Promise<IResponse<Category[]>> {
+    return this.categoryService.getCategoriesMenu()
+  }
+
   @Get()
-  @CheckPermissionsDecorator(PERMISSION_KEYS.category_list)
-  listCategory(): Promise<IResponse<Category[]>> {
-    return this.categoryService.getCategories()
+  @CheckPermissionsDecorator(PERMISSION_KEYS.category_management)
+  getCategories(@Query() query: TFilterCategories): Promise<IResponsePagination<Category>> {
+    return this.categoryService.getCategories(query)
   }
 
   @Post()

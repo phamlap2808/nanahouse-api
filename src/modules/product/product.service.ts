@@ -1,18 +1,17 @@
 import { Injectable } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
-import { Product } from '@/modules/product/product.entity'
-import { MongoRepository } from 'typeorm'
+import { Product } from '@/modules/product/product.schema'
 import { CreateProductDto } from '@/modules/product/dto/create-product.dto'
 import { IResponse, IResponsePagination } from '@define/response'
-import { IProduct, TFilterProduct } from './define'
 import { CategoryService } from '../category/category.service'
-import { ObjectId } from 'mongodb'
+import { Model } from 'mongoose'
+import { InjectModel } from '@nestjs/mongoose'
+import { TFilterProduct } from './define'
 import { addDomainToImage } from '@/common/helper/file.helper'
 
 @Injectable()
 export class ProductService {
   constructor(
-    @InjectRepository(Product) private readonly productService: MongoRepository<Product>,
+    @InjectModel('products') private readonly productModel: Model<Product>,
     private readonly categoryService: CategoryService
   ) {}
 
@@ -35,7 +34,7 @@ export class ProductService {
     } = createProductDto
     let variant = null
     if (variant_id) {
-      variant = await this.productService.findOne({ where: { _id: variant_id }, relations: ['category'] })
+      variant = await this.productModel.findOne({ _id: variant_id }).lean()
     }
     if (variant && variant.deleted_at) {
       return {
@@ -52,7 +51,7 @@ export class ProductService {
         data: null
       }
     }
-    const newProduct = this.productService.create({
+    const newProduct = new this.productModel({
       title,
       description,
       og_description,
@@ -68,11 +67,42 @@ export class ProductService {
       category,
       variant
     })
-    await this.productService.save(newProduct)
+    await newProduct.save()
+    newProduct.thumbnail = addDomainToImage(newProduct.thumbnail)
     return {
       status: true,
       message: 'Tạo sản phẩm thành công',
-      data: newProduct
+      data: newProduct.toObject()
+    }
+  }
+
+  async getListProduct(query: TFilterProduct): Promise<IResponsePagination<Product>> {
+    const currentPage = query.current_page || '1'
+    const pageRecord = query.page_record || '10'
+    const skip = (parseInt(currentPage) - 1) * parseInt(pageRecord)
+    const search = query.name ? { name: { $regex: query.name, $options: 'i' } } : {}
+    const products: Product[] = await this.productModel
+      .find({
+        ...search,
+        deleted_at: null
+      })
+      .populate('category')
+      .skip(skip)
+      .limit(parseInt(pageRecord))
+      .lean()
+    products.forEach((product) => {
+      product.thumbnail = addDomainToImage(product.thumbnail)
+    })
+    return {
+      status: true,
+      message: 'Success',
+      data: {
+        data: products,
+        total_page: Math.ceil(products.length / parseInt(pageRecord)),
+        total_page_record: parseInt(pageRecord),
+        total_record: products.length,
+        current_page: parseInt(currentPage)
+      }
     }
   }
 }

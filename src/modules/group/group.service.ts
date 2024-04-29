@@ -42,6 +42,7 @@ export class GroupService {
       })
       .skip(skip)
       .limit(parseInt(pageRecord))
+      .lean()
       .exec()
     return {
       status: true,
@@ -58,7 +59,7 @@ export class GroupService {
 
   async getGroupById(id: string): Promise<Group> {
     const _id = new ObjectId(id)
-    const group = await this.groupModel.findOne({ _id })
+    const group = await this.groupModel.findOne({ _id }).lean()
     if (!group) {
       return null
     }
@@ -88,7 +89,7 @@ export class GroupService {
   async updateGroup(id: string, group: UpdateGroupDto): Promise<IResponse<Group>> {
     const { name, description, isAdmin, permissions } = group
     const _id = new ObjectId(id)
-    const currentGroup = await this.groupModel.findOne({ _id: _id })
+    const currentGroup = await this.groupModel.findOne({ _id })
     if (!currentGroup) {
       return {
         status: false,
@@ -107,7 +108,7 @@ export class GroupService {
       return {
         status: true,
         message: 'Success',
-        data: currentGroup
+        data: currentGroup.toObject()
       }
     } catch (error) {
       return {
@@ -130,9 +131,8 @@ export class GroupService {
       }
     }
     group.deleted_at = new Date()
-    const deleteGroup = new this.groupModel(group)
     try {
-      await deleteGroup.save()
+      await this.groupModel.findByIdAndUpdate(id, group)
       return {
         status: true,
         message: 'Success',

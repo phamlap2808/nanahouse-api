@@ -2,8 +2,9 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose from 'mongoose'
 import { Group } from '@/modules/group/group.schema'
 
-@Schema({ toJSON: { virtuals: true } })
+@Schema({ toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class User {
+  _id?: string
   @Prop()
   name: string
 
@@ -39,6 +40,10 @@ export class User {
 
   @Prop({ default: null })
   deleted_at: Date
+
+  get id() {
+    return this._id.toString()
+  }
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

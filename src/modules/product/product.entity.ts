@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, ObjectId, ObjectIdColumn, UpdateDateColumn } from 'typeorm'
 import { Transform } from 'class-transformer'
-import { Category } from '@/modules/category/category.entity'
+import { Category } from '@/modules/category/category.schema'
 
 @Entity({ synchronize: true })
 export class Product {

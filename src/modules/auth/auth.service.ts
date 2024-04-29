@@ -77,26 +77,9 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<IResponse<IGetUser>> {
     const { phone_number, password } = loginDto
     const user = await this.userModel.findOne({ phone_number }).populate('group', 'name isAdmin permissions').exec()
-    console.log(user)
-    if (!user) {
+    if (!user || !user.auth_status || user.deleted_at) {
       return {
         code: HttpStatus.NOT_FOUND,
-        status: false,
-        message: 'Tài khoản và mật khẩu không chính xác',
-        data: null
-      }
-    }
-    if (!user.auth_status) {
-      return {
-        code: HttpStatus.FORBIDDEN,
-        status: false,
-        message: 'Tài khoản và mật khẩu không chính xác',
-        data: null
-      }
-    }
-    if (user.deleted_at) {
-      return {
-        code: HttpStatus.FORBIDDEN,
         status: false,
         message: 'Tài khoản và mật khẩu không chính xác',
         data: null
@@ -117,7 +100,15 @@ export class AuthService {
       code: HttpStatus.OK,
       status: true,
       message: 'Success',
-      data: user
+      data: {
+        id: user.toObject().id,
+        name: user.toObject().name,
+        phone_number: user.toObject().phone_number,
+        email: user.toObject().email,
+        address: user.toObject().address,
+        token: user.toObject().token,
+        group: user.toObject().group
+      }
     }
   }
   async changePassword(changePassword: ChangePasswordDto, user: User): Promise<IResponse<string>> {

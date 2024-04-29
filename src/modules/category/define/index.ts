@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb'
+import type { IPaginationOptions } from '@/utils/define/pagination-options'
 
 interface ICategories {
   name: string
@@ -11,4 +12,8 @@ interface ICategories {
   id: ObjectId
 }
 
-export type { ICategories }
+interface TFilterCategories extends IPaginationOptions {
+  name?: string
+}
+
+export type { ICategories, TFilterCategories }

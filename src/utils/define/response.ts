@@ -1,5 +1,4 @@
 import { Group } from '@/modules/group/group.schema'
-import { ObjectId } from 'mongodb'
 
 interface IBaseResponse {
   status: boolean
@@ -22,7 +21,7 @@ interface IResponsePagination<T> extends IBaseResponse {
 }
 
 interface IGetUser {
-  _id: ObjectId
+  id: string
   name: string
   phone_number: string
   email: string

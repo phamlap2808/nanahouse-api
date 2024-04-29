@@ -3,8 +3,9 @@ import { HydratedDocument } from 'mongoose'
 
 export type GroupDocument = HydratedDocument<Group>
 
-@Schema()
+@Schema({ toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class Group {
+  _id?: string
   @Prop({ unique: true })
   name: string
 
@@ -25,6 +26,10 @@ export class Group {
 
   @Prop({ default: null })
   deleted_at: Date
+
+  get id() {
+    return this._id.toString()
+  }
 }
 
 export const GroupSchema = SchemaFactory.createForClass(Group)

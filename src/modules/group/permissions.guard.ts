@@ -8,7 +8,7 @@ import {
   UseGuards
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { User } from '@/modules/auth/user.entity'
+import { User } from '@/modules/auth/user.schema'
 import { Group } from '@/modules/group/group.schema'
 import { GroupService } from '@/modules/group/group.service'
 
@@ -28,7 +28,7 @@ export class CheckPermissions implements CanActivate {
     const request = context.switchToHttp().getRequest()
     const user: User = request.user
 
-    const group: Group = await this.groupService.getGroupById(user.group_id)
+    const group: Group = await this.groupService.getGroupById(user.group._id)
     if (!group) {
       throw new ForbiddenException('You do not have permission to perform this action')
     }

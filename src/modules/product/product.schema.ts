@@ -47,7 +47,7 @@ export class Product {
   category: Category
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'products' })
-  variant: Product[]
+  variant: Product
 
   @Prop({ default: Date.now })
   created_at: Date

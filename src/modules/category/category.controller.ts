@@ -11,15 +11,9 @@ import { TFilterCategories } from './define'
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
-  @Get('/menu')
-  @CheckPermissionsDecorator(PERMISSION_KEYS.category_menu)
-  getCategoriesMenu(): Promise<IResponse<Category[]>> {
-    return this.categoryService.getCategoriesMenu()
-  }
-
   @Get()
   @CheckPermissionsDecorator(PERMISSION_KEYS.category_management)
-  getCategories(@Query() query: TFilterCategories): Promise<IResponsePagination<Category>> {
+  getCategories(@Query() query: TFilterCategories): Promise<IResponsePagination<any>> {
     return this.categoryService.getCategories(query)
   }
 
@@ -27,6 +21,22 @@ export class CategoryController {
   @CheckPermissionsDecorator(PERMISSION_KEYS.category_add)
   createCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<IResponse<Category>> {
     return this.categoryService.createCategory(createCategoryDto)
+  }
+
+  @Get('/menu')
+  @CheckPermissionsDecorator(PERMISSION_KEYS.category_menu)
+  getCategoriesMenu(): Promise<IResponse<Category[]>> {
+    return this.categoryService.getCategoriesMenu()
+  }
+
+  @Get('/all')
+  getAllCategories(): Promise<IResponse<Category[]>> {
+    return this.categoryService.getAllCategories()
+  }
+
+  @Get('/home')
+  getCategoriesHome(): Promise<IResponse<any>> {
+    return this.categoryService.getCategoryHome()
   }
 
   @Get('/:id')

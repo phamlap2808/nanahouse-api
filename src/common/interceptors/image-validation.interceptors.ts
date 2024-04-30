@@ -41,7 +41,9 @@ export class ImageValidationInterceptor implements NestInterceptor {
 export class FilesFieldsValidationInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const files: { [fieldname: string]: Express.Multer.File[] } = context.switchToHttp().getRequest().files
-
+    if (!files) {
+      return next.handle()
+    }
     Object.values(files)
       .flat()
       .forEach((file) => {

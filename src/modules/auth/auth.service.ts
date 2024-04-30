@@ -97,7 +97,6 @@ export class AuthService {
     user.token = this.jwtService.sign({ phone_number } as JwtPayload)
     await user.save()
     return {
-      code: HttpStatus.OK,
       status: true,
       message: 'Success',
       data: {

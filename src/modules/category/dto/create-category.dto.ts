@@ -12,4 +12,7 @@ export class CreateCategoryDto extends DTOVerification<CreateCategoryDto>() {
 
   @IsOptional()
   parent_id: string
+
+  @IsOptional()
+  sort: number
 }

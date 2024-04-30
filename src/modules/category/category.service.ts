@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { Category } from './category.schema'
-import { CreateCategoryDto } from './dto/index.dto'
+import { CreateCategoryDto, UpdateCategoryDto } from './dto/index.dto'
 import { IResponse, IResponsePagination } from '@define/response'
 import { ObjectId } from 'mongodb'
 import { InjectModel } from '@nestjs/mongoose'
@@ -12,7 +12,7 @@ export class CategoryService {
   constructor(@InjectModel('categories') private readonly categoryModel: Model<Category>) {}
 
   async createCategory(categoryDto: CreateCategoryDto): Promise<IResponse<Category>> {
-    const { name, description, parent_id } = categoryDto
+    const { name, description, parent_id, sort } = categoryDto
 
     let parent: Category = null
     if (parent_id) {
@@ -26,7 +26,7 @@ export class CategoryService {
       }
     }
 
-    const newCategory = new this.categoryModel({ name, description, parent })
+    const newCategory = new this.categoryModel({ name, description, parent, sort })
     try {
       await newCategory.save()
       return {
@@ -57,6 +57,7 @@ export class CategoryService {
     const categories = await this.categoryModel.find({ deleted_at: null, parent: null }).lean()
     for (const category of categories) {
       category.children = await this.loadChildren(category)
+      category._id = category._id.toString()
     }
     return {
       status: true,
@@ -64,25 +65,41 @@ export class CategoryService {
       data: categories
     }
   }
-  async getCategories(query: TFilterCategories): Promise<IResponsePagination<Category>> {
+  async getCategories(query: TFilterCategories): Promise<IResponsePagination<any>> {
     const currentPage = query.current_page || '1'
     const pageRecord = query.page_record || '10'
     const skip = (parseInt(currentPage) - 1) * parseInt(pageRecord)
     const search = query.name ? { name: { $regex: query.name, $options: 'i' } } : {}
-    const categories: Category[] = await this.categoryModel
-      .find({
-        ...search,
-        deleted_at: null
-      })
-      .skip(skip)
-      .limit(parseInt(pageRecord))
-      .lean()
-      .exec()
+    let queryDB: any = { ...search, deleted_at: null }
+    if (query.home) {
+      queryDB = { ...queryDB, sort: { $ne: null } }
+    }
+
+    const categories: Category[] = query.home
+      ? await this.categoryModel.find(queryDB).skip(skip).limit(parseInt(pageRecord)).populate('parent').lean().exec()
+      : await this.categoryModel
+          .find(queryDB)
+          .sort({ sort: 1 })
+          .skip(skip)
+          .limit(parseInt(pageRecord))
+          .populate('parent')
+          .lean()
+          .exec()
+    const categoriesWithIdAsString = categories.map((category) => ({
+      ...category,
+      _id: category._id.toString(),
+      parent: category.parent ? category.parent : null
+    }))
+    categoriesWithIdAsString.forEach((category) => {
+      if (category.parent) {
+        category.parent._id = category.parent._id.toString()
+      }
+    })
     return {
       status: true,
       message: 'Success',
       data: {
-        data: categories,
+        data: categoriesWithIdAsString,
         total_page: Math.ceil(categories.length / parseInt(pageRecord)),
         total_page_record: parseInt(pageRecord),
         total_record: categories.length,
@@ -95,6 +112,7 @@ export class CategoryService {
     const categories = await this.categoryModel.find({ parent, deleted_at: null }).lean()
     for (let i = 0; i < categories.length; i++) {
       categories[i].children = await this.loadChildren(categories[i])
+      categories[i]._id = categories[i]._id.toString()
     }
     return categories
   }
@@ -114,7 +132,7 @@ export class CategoryService {
       data: category
     }
   }
-  async updateCategory(id: string, categoryDto: CreateCategoryDto): Promise<IResponse<Category>> {
+  async updateCategory(id: string, categoryDto: UpdateCategoryDto): Promise<IResponse<Category>> {
     const { name, description, parent_id } = categoryDto
     const currentCategory = await this.getCategoryById(id)
     if (!currentCategory) {
@@ -138,13 +156,14 @@ export class CategoryService {
     currentCategory.name = name || currentCategory.name
     currentCategory.description = description || currentCategory.description
     currentCategory.parent = parent || currentCategory.parent
+    currentCategory.sort = categoryDto.sort || currentCategory.sort
     currentCategory.updated_at = new Date()
     try {
-      const res = await this.categoryModel.findByIdAndUpdate(id, currentCategory)
+      await this.categoryModel.findByIdAndUpdate(id, currentCategory)
       return {
         status: true,
         message: 'Success',
-        data: res.toObject()
+        data: currentCategory
       }
     } catch (error) {
       return {
@@ -177,6 +196,32 @@ export class CategoryService {
         message: error.message,
         data: null
       }
+    }
+  }
+  async getCategoryHome(): Promise<IResponse<any>> {
+    const categories = await this.categoryModel
+      .find({ deleted_at: null, sort: { $ne: null } })
+      .sort({ sort: 1 })
+      .lean()
+    return {
+      status: true,
+      message: 'Success',
+      data: categories.map((category) => ({
+        ...category,
+        _id: category._id.toString()
+      }))
+    }
+  }
+  async getAllCategories(): Promise<IResponse<Category[] | null>> {
+    const categories = await this.categoryModel.find({ deleted_at: null }).populate('parent').lean()
+    categories.map((category) => {
+      category._id = category._id.toString()
+      category.parent ? (category.parent._id = category.parent._id.toString()) : null
+    })
+    return {
+      status: true,
+      message: 'Success',
+      data: categories
     }
   }
 }

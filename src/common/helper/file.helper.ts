@@ -24,6 +24,16 @@ function createSingleFile(thumbnail: Express.Multer.File): string {
   return `/uploads/images/${newFileName}`
 }
 
+function deleteFile(filePath: string): void {
+  // get pwd
+  const currentWorkingDirectory = process.cwd()
+  fs.unlink(`${currentWorkingDirectory}${filePath}`, (err) => {
+    if (err) {
+      console.error(err)
+    }
+  })
+}
+
 function createMultipleFiles(files: Express.Multer.File[]): string[] {
   return files.map((file) => createSingleFile(file))
 }
@@ -43,4 +53,15 @@ function addDomainToImage(image: string): string {
   return `${process.env.BACKEND_DOMAIN}${image}`
 }
 
-export { createSingleFile, createMultipleFiles, createFilePipeBuilder, addDomainToImage }
+function removeDomainFromImage(image: string): string {
+  return image.replace(process.env.BACKEND_DOMAIN, '')
+}
+
+export {
+  createSingleFile,
+  createMultipleFiles,
+  createFilePipeBuilder,
+  addDomainToImage,
+  deleteFile,
+  removeDomainFromImage
+}

@@ -6,7 +6,7 @@ export type GroupDocument = HydratedDocument<Category>
 @Schema({ toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class Category {
   _id?: string
-  @Prop({ unique: true })
+  @Prop()
   name: string
 
   @Prop()

@@ -18,7 +18,7 @@ import { MongooseModule } from '@nestjs/mongoose'
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    MongooseModule.forRoot(process.env.DATABASE_URL),
+    MongooseModule.forRoot('mongodb://localhost:27017/nanahouse'),
     // MailModule,
     TestModule,
     AuthModule,

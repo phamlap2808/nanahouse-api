@@ -1,15 +1,19 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Inject, forwardRef } from '@nestjs/common'
 import { Category } from './category.schema'
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/index.dto'
 import { IResponse, IResponsePagination } from '@define/response'
 import { ObjectId } from 'mongodb'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
-import { TFilterCategories } from './define'
+import { TFilterCategories, ICategoryHome } from './define'
+import { ProductService } from '../product/product.service'
 
 @Injectable()
 export class CategoryService {
-  constructor(@InjectModel('categories') private readonly categoryModel: Model<Category>) {}
+  constructor(
+    @InjectModel('categories') private readonly categoryModel: Model<Category>,
+    @Inject(forwardRef(() => ProductService)) private readonly productService: ProductService
+  ) {}
 
   async createCategory(categoryDto: CreateCategoryDto): Promise<IResponse<Category>> {
     const { name, description, parent_id, sort } = categoryDto
@@ -198,18 +202,27 @@ export class CategoryService {
       }
     }
   }
-  async getCategoryHome(): Promise<IResponse<any>> {
+  async getCategoryHome(): Promise<IResponse<ICategoryHome[]>> {
     const categories = await this.categoryModel
       .find({ deleted_at: null, sort: { $ne: null } })
       .sort({ sort: 1 })
       .lean()
+    const categoriesWithProducts = await Promise.all(
+      categories.map(async (category) => {
+        const products = await this.productService.getProductsByCategoryRaw(category._id)
+        return { ...category, products }
+      })
+    )
+    categoriesWithProducts.map((category) => {
+      category._id = category._id.toString()
+      category.products.map((product) => {
+        product._id = product._id.toString()
+      })
+    })
     return {
       status: true,
       message: 'Success',
-      data: categories.map((category) => ({
-        ...category,
-        _id: category._id.toString()
-      }))
+      data: categoriesWithProducts
     }
   }
   async getAllCategories(): Promise<IResponse<Category[] | null>> {

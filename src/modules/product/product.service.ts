@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common'
+import { HttpStatus, Inject, Injectable, forwardRef } from '@nestjs/common'
 import { Product } from '@/modules/product/product.schema'
 import { CreateProductDto, UpdateProductDto } from '@/modules/product/dto/index.dto'
 import { IResponse, IResponsePagination } from '@define/response'
@@ -14,7 +14,7 @@ import { Category } from '../category/category.schema'
 export class ProductService {
   constructor(
     @InjectModel('products') private readonly productModel: Model<Product>,
-    private readonly categoryService: CategoryService
+    @Inject(forwardRef(() => CategoryService)) private readonly categoryService: CategoryService
   ) {}
 
   async createProduct(createProductDto: CreateProductDto): Promise<IResponse<Product>> {
@@ -198,6 +198,18 @@ export class ProductService {
         current_page: parseInt(currentPage)
       }
     }
+  }
+
+  async getProductsByCategoryRaw(category_id: string): Promise<Product[]> {
+    const _id = new ObjectId(category_id)
+    const products = await this.productModel.find({ category: _id }).lean().exec()
+    products.forEach((product) => {
+      product.thumbnail = addDomainToImage(product.thumbnail)
+      product.images.forEach((image, index) => {
+        product.images[index] = addDomainToImage(image)
+      })
+    })
+    return products
   }
 
   async updateProduct(id: string, updateProductDto: UpdateProductDto): Promise<IResponse<Product>> {

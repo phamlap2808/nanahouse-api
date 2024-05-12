@@ -5,7 +5,8 @@ import { CreateCategoryDto, UpdateCategoryDto } from './dto/index.dto'
 import { IResponse, IResponsePagination } from '@define/response'
 import { CheckPermissionsDecorator } from '../group/permissions.guard'
 import PERMISSION_KEYS from '@/config/permission-key'
-import { TFilterCategories } from './define'
+import { TFilterCategories, ICategoryHome } from './define'
+import { Public } from '@/common/decorator/public.decorator'
 
 @Controller('category')
 export class CategoryController {
@@ -34,13 +35,14 @@ export class CategoryController {
     return this.categoryService.getAllCategories()
   }
 
+  @Public()
   @Get('/home')
-  getCategoriesHome(): Promise<IResponse<any>> {
+  getCategoriesHome(): Promise<IResponse<ICategoryHome[]>> {
     return this.categoryService.getCategoryHome()
   }
 
+  @Public()
   @Get('/:id')
-  @CheckPermissionsDecorator(PERMISSION_KEYS.category_detail)
   getCategory(@Param('id') id: string): Promise<IResponse<Category>> {
     return this.categoryService.getCategory(id)
   }

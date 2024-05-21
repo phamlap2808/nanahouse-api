@@ -13,5 +13,13 @@ export default {
       edit: 'settings_user_edit',
       delete: 'settings_user_delete'
     }
+  },
+  category: {
+    menu: 'category_menu',
+    management: 'category_management',
+    add: 'category_add',
+    detail: 'category_detail',
+    edit: 'category_edit',
+    delete: 'category_delete'
   }
 }

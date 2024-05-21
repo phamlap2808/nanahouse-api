@@ -21,6 +21,7 @@ import { CreateProductDto, UpdateProductDto, DeleteProductImageDto } from './dto
 import { Product } from '@/modules/product/product.schema'
 import { IResponse, IResponsePagination } from '@define/response'
 import { TFilterProduct } from './define'
+import { Public } from '@/common/decorator/public.decorator'
 
 // import { CheckPermissionsDecorator } from './permissions.guard'
 
@@ -52,6 +53,7 @@ export class ProductController {
   }
 
   @Get()
+  @Public()
   listProduct(@Query() query: TFilterProduct): Promise<IResponsePagination<Product>> {
     return this.productService.getListProduct(query)
   }
@@ -95,9 +97,7 @@ export class ProductController {
 
   @Delete('/:id/image')
   deleteImage(@Param('id') id: string, @Body() deleteImageDto: DeleteProductImageDto): Promise<IResponse<Product>> {
-    console.log('image', deleteImageDto.image)
     const imagePath = removeDomainFromImage(deleteImageDto.image)
-    console.log('imagePath', imagePath)
     return this.productService.deleteImage(id, imagePath)
   }
 }

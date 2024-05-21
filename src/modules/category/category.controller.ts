@@ -25,7 +25,7 @@ export class CategoryController {
   }
 
   @Get('/menu')
-  @CheckPermissionsDecorator(PERMISSION_KEYS.category_menu)
+  @Public()
   getCategoriesMenu(): Promise<IResponse<Category[]>> {
     return this.categoryService.getCategoriesMenu()
   }
